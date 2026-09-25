@@ -18,6 +18,7 @@
         "@workspace/math": "*",
         "@workspace/ui": "*",
         "convex": "^1.46.0",
+        "jotai": "^3.0.0",
         "lucide-react": "^1.48.0",
         "next": "16.3.3",
         "next-themes": "^0.4.6",
