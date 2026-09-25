@@ -14,6 +14,7 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@workspace/ui/components/sidebar"
+import { cn } from "@workspace/ui/lib/utils"
 import {
     CreditCardIcon,
     InboxIcon,
@@ -114,6 +115,10 @@ export const DashboardSidebar = () => {
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton
                                         asChild
+                                        className={cn(
+                                            isActive(item.url) &&
+                                                "bg-linear-to-b from-sidebar-primary to-[#0b63f3]! text-sidebar-primary-foreground! hover:to-[#0b63f3]/90!"
+                                        )}
                                         isActive={isActive(item.url)}
                                         tooltip={item.title}
                                     >
@@ -137,6 +142,10 @@ export const DashboardSidebar = () => {
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton
                                         asChild
+                                        className={cn(
+                                            isActive(item.url) &&
+                                                "bg-linear-to-b from-sidebar-primary to-[#0b63f3]! text-sidebar-primary-foreground! hover:to-[#0b63f3]/90!"
+                                        )}
                                         isActive={isActive(item.url)}
                                         tooltip={item.title}
                                     >
@@ -160,6 +169,10 @@ export const DashboardSidebar = () => {
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton
                                         asChild
+                                        className={cn(
+                                            isActive(item.url) &&
+                                                "bg-linear-to-b from-sidebar-primary to-[#0b63f3]! text-sidebar-primary-foreground! hover:to-[#0b63f3]/90!"
+                                        )}
                                         isActive={isActive(item.url)}
                                         tooltip={item.title}
                                     >
