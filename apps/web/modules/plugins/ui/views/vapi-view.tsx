@@ -27,6 +27,7 @@ import { Label } from "@workspace/ui/components/label"
 import { Input } from "@workspace/ui/components/input"
 import { Button } from "@workspace/ui/components/button"
 import { useState } from "react"
+import { VapiConnectedView } from "../components/vapi-connected-view"
 
 const vapiFeatures: Feature[] = [
     {
@@ -116,7 +117,7 @@ const VapiPluginForm = ({
                                         <Input
                                             {...field}
                                             placeholder="Your Public API Key"
-                                            type="text"
+                                            type="password"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -133,7 +134,7 @@ const VapiPluginForm = ({
                                         <Input
                                             {...field}
                                             placeholder="Your Private API Key"
-                                            type="text"
+                                            type="password"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -157,13 +158,54 @@ const VapiPluginForm = ({
     )
 }
 
+const VapiPluginRemoveForm = ({
+    open,
+    setOpen,
+}: {
+    open: boolean
+    setOpen: (value: boolean) => void
+}) => {
+    const removePlugin = useMutation(api.private.plugins.remove)
+
+    const onSubmit = async () => {
+        try {
+            await removePlugin({
+                service: "vapi",
+            })
+            setOpen(false)
+            toast.success("Vapi Plugin Removed")
+        } catch (error) {
+            console.error(error)
+            toast.error("Something Went Wrong")
+        }
+    }
+
+    return (
+        <Dialog onOpenChange={setOpen} open={open}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Disconnect Vapi</DialogTitle>
+                </DialogHeader>
+                <DialogDescription>
+                    Are You Sure You Want To Disconnect The Vapi Plugin?
+                </DialogDescription>
+                <DialogFooter>
+                    <Button onClick={onSubmit} variant="destructive">
+                        Disconnect
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export const VapiView = () => {
     const vapiPlugin = useQuery(api.private.plugins.getOne, { service: "vapi" })
 
     const [connectOpen, setConnectOpen] = useState(false)
     const [removeOpen, setRemoveOpen] = useState(false)
 
-    const handleSubmit = () => {
+    const toggleConnection = () => {
         if (vapiPlugin) {
             setRemoveOpen(true)
         } else {
@@ -174,6 +216,7 @@ export const VapiView = () => {
     return (
         <>
             <VapiPluginForm open={connectOpen} setOpen={setConnectOpen} />
+            <VapiPluginRemoveForm open={removeOpen} setOpen={setRemoveOpen} />
             <div className="flex min-h-screen flex-col bg-muted p-8">
                 <div className="mx-auto w-full max-w-3xl">
                     <div className="space-y-2">
@@ -186,14 +229,16 @@ export const VapiView = () => {
 
                     <div className="mt-8">
                         {vapiPlugin ? (
-                            <p>Connected!!</p>
+                            <VapiConnectedView
+                                onDisconnect={toggleConnection}
+                            />
                         ) : (
                             <PluginCard
                                 serviceImage="/vapi.jpg"
                                 serviceName="Vapi"
                                 features={vapiFeatures}
                                 isDisabled={vapiPlugin === undefined}
-                                onSubmit={handleSubmit}
+                                onSubmit={toggleConnection}
                             />
                         )}
                     </div>
