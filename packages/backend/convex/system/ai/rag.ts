@@ -4,7 +4,7 @@ import { google } from "@ai-sdk/google"
 
 const rag = new RAG(components.rag, {
     textEmbeddingModel: google.embedding("gemini-embedding-2"),
-    embeddingDimension: 768,
+    embeddingDimension: 3072,
 })
 
 export default rag

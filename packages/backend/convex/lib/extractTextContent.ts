@@ -4,9 +4,7 @@ import { groq } from "@ai-sdk/groq"
 import { generateText } from "ai"
 import type { StorageActionWriter } from "convex/server"
 import { assert } from "convex-helpers"
-// Use the legacy build: it's the one meant for non-browser (Node) environments
-// and does not try to load a canvas backend for pure text extraction.
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs"
+import { extractText, getDocumentProxy } from "unpdf"
 import { Id } from "../_generated/dataModel"
 
 const AI_MODELS = {
@@ -98,18 +96,22 @@ async function extractTextFileContent(
 
 /**
  * Groq has no native PDF/file input (unlike OpenAI's `type: "file"`), and
- * rasterizing pages to images (to reuse the vision model) turns out to need
- * a real Canvas 2D backend — which in Node means a native addon like
- * @napi-rs/canvas, and Convex's "use node" action sandbox can't load native
- * binaries. So instead of rendering pages, this reads the PDF's embedded
- * text layer directly via pdfjs-dist, which is pure JS and needs no canvas
- * at all. This covers the large majority of real PDFs (anything exported
- * from Word/Docs, or any PDF that isn't just scanned photos of pages).
+ * two approaches to work around that hit dead ends inside Convex's "use node"
+ * action sandbox: rasterizing pages to images needs a Canvas 2D backend,
+ * which in Node means a native addon (@napi-rs/canvas) that the sandbox
+ * can't load; and raw `pdfjs-dist` tries to dynamically `import()` its own
+ * worker file at runtime, a path esbuild's bundling can't resolve.
+ *
+ * `unpdf` sidesteps both: it ships a serverless-safe rebuild of PDF.js with
+ * no worker requirement and no native/canvas dependency, built for exactly
+ * this kind of bundled Node environment. It reads the PDF's embedded text
+ * layer directly, which covers the large majority of real PDFs (anything
+ * exported from Word/Docs, or any PDF that isn't just scanned photos).
  *
  * Caveat: a PDF that's purely scanned images with no text layer will come
- * back empty here, since there's no text to extract. OCR-ing those would
- * require either a vision model (blocked by the canvas issue above) or an
- * external OCR service outside Convex's sandbox.
+ * back empty, since there's no text to extract. OCR-ing those would need
+ * either a vision model (blocked by the canvas issue above) or an external
+ * OCR service outside Convex's sandbox.
  */
 async function extractPdfText(
     url: string,
@@ -119,35 +121,22 @@ async function extractPdfText(
     const response = await fetch(url)
     const arrayBuffer = await response.arrayBuffer()
 
-    const loadingTask = pdfjsLib.getDocument({
-        data: new Uint8Array(arrayBuffer),
-        useSystemFonts: false,
-    })
+    const pdf = await getDocumentProxy(new Uint8Array(arrayBuffer))
+    const { text, totalPages } = await extractText(pdf, { mergePages: false })
 
-    const document = await loadingTask.promise
-    const pageTexts: string[] = []
-
-    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
-        const page = await document.getPage(pageNumber)
-        const content = await page.getTextContent()
-
-        const pageText = content.items
-            .map((item) => ("str" in item ? item.str : ""))
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim()
-
-        if (pageText.length > 0) {
-            pageTexts.push(`## Page ${pageNumber}\n\n${pageText}`)
-        }
-    }
-
-    await loadingTask.destroy()
+    const pageTexts = text
+        .map((pageText, index) => {
+            const trimmed = pageText.replace(/\s+/g, " ").trim()
+            return trimmed.length > 0
+                ? `## Page ${index + 1}\n\n${trimmed}`
+                : null
+        })
+        .filter((page): page is string => page !== null)
 
     if (pageTexts.length === 0) {
         throw new Error(
-            `No extractable text found in PDF "${filename}". It may be a scanned ` +
-                "document with no text layer, which this pipeline can't OCR."
+            `No extractable text found in PDF "${filename}" (${totalPages} pages). ` +
+                "It may be a scanned document with no text layer, which this pipeline can't OCR."
         )
     }
 

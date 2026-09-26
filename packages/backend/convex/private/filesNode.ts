@@ -9,6 +9,7 @@ import { action } from "../_generated/server"
 import { ConvexError, v } from "convex/values"
 import rag from "../system/ai/rag"
 import { extractTextContent } from "../lib/extractTextContent"
+import { Id } from "../_generated/dataModel"
 
 function guessMimeType(filename: string, bytes: ArrayBuffer): string {
     return (
@@ -73,7 +74,7 @@ export const addFile = action({
                 uploadedBy: orgId, // Important for deletion
                 filename,
                 category: category ?? null,
-            },
+            } as EntryMetadata,
             contentHash: await contentHashFromArrayBuffer(bytes), // To avoid re-inserting if the file content hasn't changed
         })
 
@@ -88,3 +89,10 @@ export const addFile = action({
         }
     },
 })
+
+type EntryMetadata = {
+    storageId: Id<"_storage">
+    uploadedBy: string
+    filename: string
+    category: string | null
+}
