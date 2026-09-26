@@ -1,7 +1,8 @@
+import { VapiView } from "@/modules/plugins/ui/views/vapi-view"
 import React from "react"
 
 const Page = () => {
-    return <p>Vapi Plugin</p>
+    return <VapiView />
 }
 
 export default Page

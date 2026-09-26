@@ -4,6 +4,7 @@ import "@workspace/ui/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import ConvexClientProvider from "@/components/providers"
 import { ClerkProvider } from "@clerk/nextjs"
+import { Toaster } from "@workspace/ui/components/sonner"
 
 const fontSans = Geist({
     subsets: ["latin"],
@@ -27,7 +28,10 @@ export default function RootLayout({
             >
                 <ClerkProvider>
                     <ConvexClientProvider>
-                        <ThemeProvider>{children}</ThemeProvider>
+                        <ThemeProvider>
+                            <Toaster />
+                            {children}
+                        </ThemeProvider>
                     </ConvexClientProvider>
                 </ClerkProvider>
             </body>
