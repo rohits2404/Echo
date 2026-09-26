@@ -5,6 +5,64 @@ import { Doc } from "../_generated/dataModel"
 import { MessageDoc } from "@convex-dev/agent"
 import { supportAgent } from "../system/ai/agents/supportAgent"
 
+export const getOne = query({
+    args: {
+        conversationId: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity()
+
+        if (identity === null) {
+            throw new ConvexError({
+                code: "UNAUTHORIZED",
+                message: "Identity not found",
+            })
+        }
+
+        const org = identity.o as
+            { id: string; rol: string; slg: string } | undefined
+
+        if (!org?.id) {
+            throw new ConvexError({
+                code: "UNAUTHORIZED",
+                message: "Organization not found",
+            })
+        }
+
+        const orgId = org.id
+
+        const conversation = await ctx.db.get(args.conversationId)
+
+        if (!conversation) {
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Conversation not found",
+            })
+        }
+
+        if (conversation.organizationId !== orgId) {
+            throw new ConvexError({
+                code: "UNAUTHORZIED",
+                message: "Invalid Organization ID",
+            })
+        }
+
+        const contactSession = await ctx.db.get(conversation.contactSessionId)
+
+        if (!conversation) {
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Contact Session not found",
+            })
+        }
+
+        return {
+            ...conversation,
+            contactSession,
+        }
+    },
+})
+
 export const getMany = query({
     args: {
         paginationOpts: paginationOptsValidator,
