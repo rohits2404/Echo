@@ -19,6 +19,8 @@
         "@convex-dev/agent": "^0.7.3",
         "@convex-dev/ai-sdk-provider": "^0.2.1",
         "ai": "^7.0.116",
-        "convex": "^1.46.0"
+        "convex": "^1.46.0",
+        "convex-helpers": "^0.1.124",
+        "zod": "^4.6.5"
     }
 }

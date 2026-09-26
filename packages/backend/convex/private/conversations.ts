@@ -1,9 +1,62 @@
 import { paginationOptsValidator, PaginationResult } from "convex/server"
-import { query } from "../_generated/server"
+import { mutation, query } from "../_generated/server"
 import { ConvexError, v } from "convex/values"
 import { Doc } from "../_generated/dataModel"
 import { MessageDoc } from "@convex-dev/agent"
 import { supportAgent } from "../system/ai/agents/supportAgent"
+
+export const updateStatus = mutation({
+    args: {
+        conversationId: v.id("conversations"),
+        status: v.union(
+            v.literal("unresolved"),
+            v.literal("escalated"),
+            v.literal("resolved")
+        ),
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity()
+
+        if (identity === null) {
+            throw new ConvexError({
+                code: "UNAUTHORIZED",
+                message: "Identity not found",
+            })
+        }
+
+        const org = identity.o as
+            { id: string; rol: string; slg: string } | undefined
+
+        if (!org?.id) {
+            throw new ConvexError({
+                code: "UNAUTHORIZED",
+                message: "Organization not found",
+            })
+        }
+
+        const orgId = org.id
+
+        const conversation = await ctx.db.get(args.conversationId)
+
+        if (!conversation) {
+            throw new ConvexError({
+                code: "NOT_FOUND",
+                message: "Conversation not found",
+            })
+        }
+
+        if (conversation.organizationId !== orgId) {
+            throw new ConvexError({
+                code: "UNAUTHORZIED",
+                message: "Invalid Organization ID",
+            })
+        }
+
+        await ctx.db.patch(args.conversationId, {
+            status: args.status,
+        })
+    },
+})
 
 export const getOne = query({
     args: {
@@ -49,7 +102,7 @@ export const getOne = query({
 
         const contactSession = await ctx.db.get(conversation.contactSessionId)
 
-        if (!conversation) {
+        if (!contactSession) {
             throw new ConvexError({
                 code: "NOT_FOUND",
                 message: "Contact Session not found",
