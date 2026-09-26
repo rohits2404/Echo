@@ -45,17 +45,9 @@ export const search = createTool({
             .join(", ")}. Here is the context:\n\n${searchResult.text}`
 
         const response = await generateText({
-            messages: [
-                {
-                    role: "system",
-                    content: SEARCH_INTERPRETER_PROMPT,
-                },
-                {
-                    role: "user",
-                    content: `User asked: "${args.query}"\n\nSearch results: ${contextText}`,
-                },
-            ],
             model: groq("openai/gpt-oss-20b"),
+            instructions: SEARCH_INTERPRETER_PROMPT,
+            prompt: `User asked: "${args.query}"\n\nSearch results: ${contextText}`,
         })
 
         await supportAgent.saveMessage(ctx, {

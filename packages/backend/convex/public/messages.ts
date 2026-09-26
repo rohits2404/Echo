@@ -54,7 +54,7 @@ export const create = action({
         const shouldTriggerAgent = conversation.status === "unresolved"
 
         if (shouldTriggerAgent) {
-            await supportAgent.generateText(
+            const result = await supportAgent.generateText(
                 ctx,
                 { threadId: args.threadId },
                 {
@@ -66,6 +66,10 @@ export const create = action({
                     },
                 }
             )
+
+            console.log("AGENT TEXT:", result.text)
+            console.log("AGENT FINISH REASON:", result.finishReason)
+            console.log("AGENT STEPS:", result.steps)
         } else {
             await saveMessage(ctx, components.agent, {
                 threadId: args.threadId,
