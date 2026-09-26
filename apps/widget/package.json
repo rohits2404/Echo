@@ -4,9 +4,9 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "dev": "next dev",
+        "dev": "next dev -p 3001",
         "build": "next build",
-        "start": "next start",
+        "start": "next start -p 3001",
         "lint": "eslint",
         "format": "prettier --write \"**/*.{ts,tsx}\"",
         "typecheck": "tsc --noEmit"
@@ -19,6 +19,7 @@
         "@workspace/math": "*",
         "@workspace/ui": "*",
         "convex": "^1.46.0",
+        "date-fns": "^4.4.0",
         "jotai": "^3.0.0",
         "jotai-family": "^1.1.0",
         "lucide-react": "^1.48.0",
