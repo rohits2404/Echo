@@ -11,13 +11,23 @@ export const validate = action({
         organizationId: v.string(),
     },
     handler: async (_, args) => {
-        const organization = await clerkClient.organizations.getOrganization({
-            organizationId: args.organizationId,
-        })
+        try {
+            const organization =
+                await clerkClient.organizations.getOrganization({
+                    organizationId: args.organizationId,
+                })
 
-        if (organization) {
-            return { valid: true }
-        } else {
+            return {
+                valid: true,
+                organization: {
+                    id: organization.id,
+                    name: organization.name,
+                    slug: organization.slug,
+                    imageUrl: organization.imageUrl,
+                },
+            }
+        } catch (error) {
+            console.error("Clerk organization lookup failed", error)
             return { valid: false, reason: "Organization Not Valid" }
         }
     },
